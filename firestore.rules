@@ -1,0 +1,89 @@
+rules_version = '2';
+
+// ════════════════════════════════════════════════════════════════════
+// SZR — Firestore Security Rules (v4 - supports both get-by-id & queries)
+//
+// For single-doc reads (get): we check the doc-id prefix {uid}_{date}.
+// For collection queries (list): Firestore evaluates rules against each
+//   matched doc's data, so we ALSO allow when resource.data.employeeId
+//   matches. Employee queries always include where('employeeId','==',uid),
+//   so every returned doc passes.
+// ════════════════════════════════════════════════════════════════════
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /companies/{companyId} {
+
+      // ── Helpers ───────────────────────────────────────────────────
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function profilePath(uid) {
+        return /databases/$(database)/documents/companies/$(companyId)/employees/$(uid);
+      }
+
+      function profileExists() {
+        return isSignedIn() && exists(profilePath(request.auth.uid));
+      }
+
+      function profile() {
+        return get(profilePath(request.auth.uid)).data;
+      }
+
+      function isAdmin() {
+        return profileExists() && profile().role == 'admin';
+      }
+
+      // Owns by doc-id prefix ("{uid}_{date}"). Works even if doc missing.
+      function ownsById(docId) {
+        return isSignedIn() && docId.split('_')[0] == request.auth.uid;
+      }
+
+      // Owns by the existing document's data (for query/list reads).
+      function ownsData() {
+        return isSignedIn() && resource.data.employeeId == request.auth.uid;
+      }
+
+      // Owns by the incoming write data.
+      function ownsIncoming() {
+        return isSignedIn() && request.resource.data.employeeId == request.auth.uid;
+      }
+
+      // ── Settings (meta) ───────────────────────────────────────────
+      match /meta/{docId} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
+      }
+
+      // ── Employees ─────────────────────────────────────────────────
+      match /employees/{empId} {
+        allow read: if isSignedIn();
+        allow create, update: if isAdmin() || (isSignedIn() && empId == request.auth.uid);
+        allow delete: if isAdmin();
+      }
+
+      // ── Attendance ────────────────────────────────────────────────
+      // read: admin, OR own (by id for get, by data for query)
+      match /attendance/{recId} {
+        allow read: if isAdmin() || ownsById(recId) || ownsData();
+        allow create: if isAdmin() || (ownsById(recId) && ownsIncoming());
+        allow update: if isAdmin() || (ownsById(recId) && ownsIncoming());
+        allow delete: if isAdmin();
+      }
+
+      // ── Day status (leave/sick/vacation) ──────────────────────────
+      match /dayStatus/{recId} {
+        allow read: if isAdmin() || ownsById(recId) || ownsData();
+        allow create, update, delete: if isAdmin();
+      }
+
+      // ── Holidays ──────────────────────────────────────────────────
+      match /holidays/{holId} {
+        allow read: if isSignedIn();
+        allow create, update, delete: if isAdmin();
+      }
+    }
+  }
+}
