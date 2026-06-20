@@ -11,7 +11,7 @@
  * files instead of serving stale cached versions.
  */
 
-const CACHE_NAME = 'szr-v2.1.0';
+const CACHE_NAME = 'szr-v2.1.1';
 
 // Core files that make up the app shell
 const APP_SHELL = [
