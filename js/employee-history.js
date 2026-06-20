@@ -104,6 +104,9 @@ export async function renderEmployeeHistory(main) {
           daysPresent++;
           totalWorked += result.worked;
           totalLost += result.lost;
+        } else if (result.status === 'absent') {
+          // An absent working day means the whole day is lost time.
+          totalLost += result.lost;
         }
         entries.push({ date, day, result });
       }
