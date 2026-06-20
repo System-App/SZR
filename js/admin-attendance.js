@@ -62,7 +62,7 @@ export async function renderAttendance(main) {
       const totalWorked = summaries.reduce((s, x) => s + x.totalWorked, 0);
       content.appendChild(el('div.card.card--padded', { style: { marginBottom: '12px', textAlign: 'center' } }, [
         el('div', { style: { fontSize: 'var(--text-xs)', color: 'var(--ink-soft)', fontWeight: '600' } }, 'کۆی گشتی کاتی کارکراو'),
-        el('div', { style: { fontSize: 'var(--text-2xl)', fontWeight: '800', color: 'var(--olive)', direction: 'ltr', marginTop: '2px' } }, formatDuration(totalWorked)),
+        el('div', { style: { fontSize: 'var(--text-2xl)', fontWeight: '800', color: 'var(--olive)', direction: 'ltr', marginTop: '2px' } }, formatDurationCompact(totalWorked)),
       ]));
 
       for (const s of summaries) {
@@ -227,11 +227,11 @@ function buildDetailHead(employee, startDate, endDate, totals) {
     el('div.detail-head__grid', {}, [
       el('div.detail-stat', {}, [
         el('div.detail-stat__lbl', {}, 'کاتی کارکراو'),
-        el('div.detail-stat__val', {}, formatDuration(totals.totalWorked)),
+        el('div.detail-stat__val', {}, formatDurationCompact(totals.totalWorked)),
       ]),
       el('div.detail-stat.detail-stat--lost', {}, [
         el('div.detail-stat__lbl', {}, 'کاتی لەدەستچوو'),
-        el('div.detail-stat__val', {}, formatDuration(totals.totalLost)),
+        el('div.detail-stat__val', {}, formatDurationCompact(totals.totalLost)),
       ]),
       el('div.detail-stat', {}, [
         el('div.detail-stat__lbl', {}, 'ڕۆژانی ئامادەبوو'),
